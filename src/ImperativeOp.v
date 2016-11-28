@@ -26,8 +26,8 @@ Definition newVarVal (L : Lang) (T : Ty) : Val :=
 Definition Name := nat.
 
 Inductive EnvEntry : Type :=
-  | VarType : Ref -> Ty  -> EnvEntry
-  | Const   : Ty  -> Val -> EnvEntry.
+  | VarType   : Ref -> Ty  -> EnvEntry
+  | ConstType : Ty  -> Val -> EnvEntry.
 
 Definition Env := list (Name * EnvEntry).
 
@@ -47,9 +47,20 @@ Fixpoint memLookup (M : Memory) (r : Ref) : Val :=
   | [] => Undefined
   | (k, v) :: ms => if (beq_nat r k) then v else memLookup ms r
   end.
- 
-Definition memAdd (M : Memory) (r : Ref) (v : Val) : Memory :=
-  (r, v) :: M.
+
+Fixpoint memUpdate (M : Memory) (e : (Ref * Val)) : Memory :=
+  match M, e with
+  | [],          _     => []
+  | (s,u) :: ms, (r,v) => if beq_nat r s then (r,v) :: ms 
+                                         else (s,u) :: memUpdate ms e
+  end.
+  
+Definition memAdd (M : Memory) (e : (Ref * Val)) : Memory :=
+  match (find (beq_nat (fst e)) (map fst M)) with
+  | None   => e :: M
+  | Some _ => memUpdate M e
+  end.
+    
 
 Fixpoint isFree (M : Memory) (r : Ref) : bool :=
   match M with
@@ -71,6 +82,7 @@ Inductive Ops : Type :=
 Inductive Exp : Type :=
   | Num    : Val  -> Exp
   | Var    : Name -> Exp
+  | Const  : Name -> Exp
   | Op     : Exp  -> Ops  -> Exp -> Exp.
 
 Reserved Notation "EM '|-R' x ':::' v" (at level 40).
@@ -107,8 +119,8 @@ Inductive evalR : (Env * Memory) -> Exp -> Val -> Prop :=
                (E,M) |-R (Op e1 neq e2) ::: (VBool false)
                
   | EvConstR: forall E M x T v,
-                envLookup E x = Some (Const T v)  ->
-                (E,M) |-R (Var x) ::: v
+                envLookup E x = Some (ConstType T v)  ->
+                (E,M) |-R (Const x) ::: v
 
   where "EM '|-R' x ':::' v" := (evalR EM x v).
 
@@ -130,12 +142,12 @@ Section Command.
     | If     : Exp  -> Cmnd -> Cmnd -> Cmnd
     | While  : Exp  -> Cmnd -> Cmnd.
 
-  Notation "T 'var'   N" := (Decl T N) (at level 60).
+  Notation "T 'var'   N"       := (Decl T N) (at level 60).
   Notation "T 'const' N :=: V" := (DeclC T N V) (at level 60).
-  Notation "E1 ::= E2" := (Ass E1 E2) (at level 60).
-  Notation "C1 ;; C2" := (Seq C1 C2) (at level 80, right associativity).
+  Notation "E1 ::= E2"         := (Ass E1 E2) (at level 60).
+  Notation "C1 ;; C2"          := (Seq C1 C2) (at level 80, right associativity).
   Notation "'If' ( B ) C1 'Else' C2" := (If B C1 C2) (at level 80, right associativity).
-  Notation "'While' ( B ) C1" := (While B C1) (at level 80, right associativity).
+  Notation "'While' ( B ) C1"  := (While B C1) (at level 80, right associativity).
 
   Reserved Notation "EM '{{' a '}}' Em'" (at level  40).
   Inductive eval : (Env * Memory) -> Cmnd -> (Env * Memory) -> Prop :=
@@ -143,17 +155,17 @@ Section Command.
     | EvDecl  : forall E M T x L,
                   let l  := free M in
                   let E' := envAdd E x (VarType l T) in
-                  let M' := memAdd M l (newVarVal L T)
+                  let M' := memAdd M (l, (newVarVal L T))
                    in (E,M) {{Decl T x}} (E', M')
 
     | EvDeclC : forall E M T x n,
-                  let E' := envAdd E x (Const T n)
+                  let E' := envAdd E x (ConstType T n)
                    in (E,M) {{DeclC T x n}} (E', M)
 
     | EvAss   : forall E M e1 e2 l v,
                   (E,M) |-L e1 ::: l ->
                   (E,M) |-R e2 ::: v ->
-                  let M' := memAdd M l v
+                  let M' := memAdd M (l, v)
                    in (E,M) {{Ass e1 e2}} (E, M')
 
     | EvSeq   : forall E M E' M' E'' M'' S1 S2,
@@ -189,17 +201,15 @@ Section Command.
     (Var 1) ::= Num (VInt 0);;
     
     While (Op (Var 1) neq  (Num (VInt 1)))
-      (Var 1) ::= (Op (Var 1) plus (Var 0)).
+      (Var 1) ::= (Op (Var 1) plus (Const 0)).
 
   Definition E := [(2, VarType 1 Bool);
                    (1, VarType 0 Int);
-                   (0, Const Int (VInt 1))].
+                   (0, ConstType Int (VInt 1))].
 
-  Definition M := (* [(0, VInt 1); (1, VBool false)]. 
-                     Speicherwerte werden neu angelegt, statt überschrieben zu werden *)
-     [(0, VInt 1); (0, VInt 0); (1, VBool false); (0, VInt 0)].
-     
-   Example e : ([],[]) {{P}} (E,M).
+  Definition M := [(1, VBool false); (0, VInt 1)].
+
+  Example e : ([],[]) {{P}} (E,M).
    Proof. eapply EvSeq.
      - apply EvDeclC.
      - eapply EvSeq.
@@ -216,7 +226,7 @@ Section Command.
                       --- reflexivity.
                       --- reflexivity.
                    ++ apply EvNumR.
-                   ++ unfold not. intros H. inversion H.
+                   ++ intros H. inversion H.
                 ** eapply EvSeq.
                    ++ apply EvAss.
                       --- eapply EvVarL. reflexivity.
@@ -234,16 +244,12 @@ Section Command.
   Qed.
   
   Example e2 : ([],[]) {{P}} (E,M).
-  Proof. eapply EvSeq.
-    repeat econstructor. (* repeat econstructor. rechnet sehr lange, Endlosschleife? *)
-    econstructor. econstructor. econstructor. econstructor.
-    econstructor. econstructor. econstructor. econstructor.
-    econstructor. econstructor. econstructor. econstructor.
-    econstructor. econstructor. econstructor.
-    auto.
-    econstructor. econstructor. econstructor. econstructor.
-    econstructor. econstructor. econstructor. econstructor.
-    econstructor. simpl. Admitted. 
-    (* Falsche Regel angewendet durch mehrdeutigen Var Konstruktor *)
+   Proof. 
+     repeat (econstructor; 
+             try instantiate (1 := Java); 
+             try instantiate (2 := Java)).
+     intros H. inversion H.
+   Qed.
+ 
     
 End Command.
