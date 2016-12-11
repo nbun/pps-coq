@@ -244,11 +244,11 @@ Section Command.
   Qed.
   
   Example e2 : ([],[]) {{P}} (E,M).
-   Proof. 
+   Proof.
      repeat (econstructor; 
              try instantiate (1 := Java); 
-             try instantiate (2 := Java)).
-     intros H. inversion H.
+             try instantiate (2 := Java)). 
+     auto.
    Qed.
  
     
