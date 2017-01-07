@@ -9,18 +9,15 @@ Inductive Ty : Type :=
   | Int  : Ty
   | Bool : Ty.
 
-Inductive Lang : Type := C | Java.
-
 Inductive Val : Type :=
   | VInt  : nat  -> Val
   | VBool : bool -> Val
   | Undefined : Val.
 
-Definition newVarVal (L : Lang) (T : Ty) : Val :=
-  match L, T with
-  | Java, Int  => VInt 0
-  | Java, Bool => VBool false
-  | C,    _    => Undefined
+Definition newVarVal (T : Ty) : Val :=
+  match T with
+  | Int  => VInt 0
+  | Bool => VBool false
   end.
 
 Definition Name := nat.
@@ -152,10 +149,10 @@ Section Command.
   Reserved Notation "EM '{{' a '}}' Em'" (at level  40).
   Inductive eval : (Env * Memory) -> Cmnd -> (Env * Memory) -> Prop :=
 
-    | EvDecl  : forall E M T x L,
+    | EvDecl  : forall E M T x,
                   let l  := free M in
                   let E' := envAdd E x (VarType l T) in
-                  let M' := memAdd M (l, (newVarVal L T))
+                  let M' := memAdd M (l, (newVarVal T))
                    in (E,M) {{Decl T x}} (E', M')
 
     | EvDeclC : forall E M T x n,
@@ -213,9 +210,9 @@ Section Command.
    Proof. eapply EvSeq.
      - apply EvDeclC.
      - eapply EvSeq.
-       * apply EvDecl with (L := Java).
+       * apply EvDecl.
        * eapply EvSeq.
-         + apply EvDecl with (L := Java).
+         + apply EvDecl.
          + eapply EvSeq.
            -- apply EvAss.
               ** eapply EvVarL. reflexivity.
@@ -244,12 +241,6 @@ Section Command.
   Qed.
   
   Example e2 : ([],[]) {{P}} (E,M).
-   Proof.
-     repeat (econstructor; 
-             try instantiate (1 := Java); 
-             try instantiate (2 := Java)). 
-     auto.
-   Qed.
- 
-    
+  Proof. repeat econstructor. auto. Qed.
+   
 End Command.

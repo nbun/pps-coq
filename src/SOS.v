@@ -1,14 +1,13 @@
 (* Chapter 2.2.3 *)
 
-Require Import BinNums ZArith EqNat Lists.List.
+Require Import ZArith Lists.List.
 Import ListNotations.
-Local Open Scope Z_scope.
 
-Definition ID := Z.
+Definition ID := nat.
+
 Inductive Val : Type :=
-  | VInt  : Z  -> Val
-  | VBool : bool -> Val
-  | Undefined : Val.
+  | VInt  : nat -> Val
+  | VBool : bool -> Val.
 
 Definition Context := list (ID * Val).
 
@@ -16,11 +15,21 @@ Fixpoint lookup (Sigma : Context) (i : ID) : option Val :=
   match Sigma with
   | []          => None
   | (k,v) :: ps => if (k =? i) then Some v
-                                    else lookup ps i
+                              else lookup ps i
+  end.
+
+Fixpoint replace (Sigma : Context) (i : ID) (v' : Val) : Context * bool :=
+  match Sigma with
+  | []          => ([], false)
+  | (k,v) :: ps => if (k =? i) then ((k,v') :: ps, true)
+                  else let (Sigma', b) := replace ps i v'
+                        in ((k,v) :: Sigma', b)
   end.
 
 Definition add (Sigma : Context) (i : ID) (v : Val) : Context :=
-  (i, v) :: Sigma.
+  let (Sigma', b) := replace Sigma i v
+   in if b then Sigma'
+           else (i, v) :: Sigma.
  
 Inductive Ops : Type :=
 | plus : Ops
@@ -87,9 +96,9 @@ Notation "'While' E 'Do' S" := (While E S) (at level 80, right associativity).
 
 Reserved Notation "<| S , o |> --> <| S' , o' |>".
 Inductive step : S -> Context -> S -> Context -> Prop :=
-| SAss : forall o v e w,
+| SAss : forall o o' v e w,
     o |- e ::: w ->
-    let o' := (add o v w) in
+    o' = (add o v w) ->
     <| (Var v) ::= e, o |> --> <| Skip, o' |>
 
 | SSeqk : forall S o, <| Skip ;; S, o |> --> <| S, o |>
@@ -116,16 +125,29 @@ Inductive step : S -> Context -> S -> Context -> Prop :=
 
 where "<| S , o |> --> <| S' , o' |>" := (step S o S' o').
 
-Definition P := If (Op (Var 0) less (Num (VInt 0)))
-                   Then ((Var 0) ::= (Op (Num (VInt 0)) sub (Var 0)))
+Definition P := If (Op (Var 0) less (Num (VInt 42)))
+                   Then ((Var 0) ::= (Op (Num (VInt 42)) plus (Var 0)))
                    Else Skip. 
 
-Definition P2 :=  ((Var 0) ::= (Op (Num (VInt 0)) sub (Var 0))).
+Definition P2 :=  ((Var 0) ::= (Op (Num (VInt 42)) plus (Var 0))).
 
-Definition Prop1 := <| P, [(0, VInt (-42))] |> -->
-                    <| P2, [(0, VInt (-42))] |>.
-Definition Prop2 := <| P2, [(0, VInt (-42))] |> -->
-                    <| Skip, [(0, VInt 42); (0, VInt (-42))] |>.
+Definition Prop1 := <| P, [(0, VInt 31)] |> -->
+                    <| P2, [(0, VInt 31)] |>.
+Definition Prop2 := <| P2, [(0, VInt 31)] |> -->
+                    <| Skip, [(0, VInt 73)] |>.
 
 Example e : Prop1 /\ Prop2.
-Proof. repeat econstructor. Qed.
+Proof. split.
+       - apply SIfT. eapply EvLess.
+         * apply EvVar. reflexivity.
+         * apply EvNum.
+         * repeat econstructor.
+       - eapply SAss. eapply EvPlus.
+         * apply EvNum.
+         * apply EvVar. reflexivity.
+         * reflexivity.
+         * reflexivity.
+Qed.
+
+Example e2 : Prop1 /\ Prop2.
+Proof. repeat econstructor. Qed. 
