@@ -1,0 +1,7 @@
+-Q src PPS
+
+src/Map.v
+src/Env.v
+src/Exp.v
+src/SOS.v
+src/ParametrisedSOS.v
