@@ -1,13 +1,21 @@
-Inductive aexp : Type :=
-  | ANum : nat -> aexp
-  | APlus : aexp -> aexp -> aexp
-  | AMinus : aexp -> aexp -> aexp
-  | AMult : aexp -> aexp -> aexp.
+Section Exp.
 
-Inductive bexp : Type :=
-  | BTrue : bexp
-  | BFalse : bexp
-  | BEq : aexp -> aexp -> bexp
-  | BLe : aexp -> aexp -> bexp
-  | BNot : bexp -> bexp
-  | BAnd : bexp -> bexp -> bexp.
+  Variable ID : Type.
+
+  Inductive AExp : Type :=
+    | ANum  : nat  -> AExp
+    | AVar  : ID -> AExp
+    | APlus  : AExp -> AExp -> AExp
+    | AMinus : AExp -> AExp -> AExp
+    | AMult  : AExp -> AExp -> AExp.
+
+  Inductive BExp : Type :=
+    | BTrue  : BExp
+    | BFalse : BExp
+    | BVar   : BExp
+    | BEq  : AExp -> AExp -> BExp
+    | BLe  : AExp -> AExp -> BExp
+    | BNot : BExp -> BExp
+    | BAnd : BExp -> BExp -> BExp.
+
+End Exp.
