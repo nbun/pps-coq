@@ -12,7 +12,7 @@ Section Exp.
   Inductive BExp : Type :=
     | BTrue  : BExp
     | BFalse : BExp
-    | BVar   : BExp
+    | BVar   : ID -> BExp
     | BEq  : AExp -> AExp -> BExp
     | BLe  : AExp -> AExp -> BExp
     | BNot : BExp -> BExp
