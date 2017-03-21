@@ -1,4 +1,5 @@
-Require Import PPS.Map Lists.List.
+Require Export PPS.Map.
+Require Import Lists.List.
 Import ListNotations.
 
 Section Env.
@@ -24,5 +25,7 @@ Section Env.
     | (k,v) :: ps => if (k == i) then (k,v') :: ps
                     else (k,v) :: update ps i v'
     end.
+
+  Definition union (Sigma Delta : EnvironmentL) := app Sigma Delta.
 
 End Env.
