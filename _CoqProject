@@ -3,8 +3,14 @@
 src/Map.v
 src/Env.v
 src/Exp.v
-src/SOS.v
-src/ParametrisedSOS.v
 src/Imp/Imp_1.v
 src/Imp/Imp_2_LR.v
 src/Imp/Imp_3_Bool.v
+src/SOS/SOS.v
+src/SOS/SOS_Theorems.v
+src/SOS/ABExp.v
+src/SOS/ABExp_Theorems.v
+src/Exercises/SOS_1_Example.v
+src/Exercises/Imp_4_DoubleFloat.v
+src/Exercises/SOS_2_For.v
+src/Exercises/SOS_3_ForExample.v
