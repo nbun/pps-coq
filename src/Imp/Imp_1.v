@@ -21,10 +21,10 @@ Section ImpModell.
 
   Reserved Notation "E '|-l' val" (at level 80).
 
-  Notation "E ; x" := (union Name Ref E (cons x nil)) (at level 40).
+  Notation "E ; x" := (union E (cons x nil)) (at level 40).
 
   Section EnvRelation.
-    
+
     Inductive Lookup : Env -> (Name * Ref) -> Prop :=
     | LAxiom : forall E x beta,
         E; (x, beta) |-l (x, beta)

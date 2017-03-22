@@ -21,7 +21,7 @@ Section ImpModell.
 
   Reserved Notation "E '|-l' val" (at level 80).
 
-  Notation "E ; x" := (union Name Ref E (cons x nil)) (at level 40).
+  Notation "E ; x" := (union E (cons x nil)) (at level 40).
 
   Section EnvRelation.
     
