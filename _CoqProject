@@ -8,4 +8,3 @@ src/ParametrisedSOS.v
 src/Imp/Imp_1.v
 src/Imp/Imp_2_LR.v
 src/Imp/Imp_3_Bool.v
-src/Imp/Imp_4_Const.v

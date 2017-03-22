@@ -1,4 +1,4 @@
-Require Import Nat Lists.List.
+Require Import Nat.
 Require Import PPS.Env.
 
 Set Implicit Arguments.

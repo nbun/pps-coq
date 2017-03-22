@@ -1,4 +1,4 @@
-Require Import Nat Lists.List.
+Require Import Nat.
 Require Import PPS.Env.
 
 Set Implicit Arguments.
@@ -44,8 +44,7 @@ Section ImpModell.
 
     Inductive Exp : Type :=
     | Num : nat -> Exp
-    | TT : Exp
-    | FF : Exp
+    | BoolE : bool -> Exp
     | Var : Ty -> Name -> Exp
     | Op : Exp -> Ops -> Exp -> Exp
     with Ops : Type :=
@@ -66,9 +65,7 @@ Section ImpModell.
 
     | EvNumR  : forall E M n, (E,M) |-R Num n ⇓ VInt n
 
-    | EVTrueR : forall E M, (E,M) |-R TT ⇓ VBool true
-
-    | EVFalseR : forall E M, (E,M) |-R FF ⇓ VBool false
+    | EVBoolR : forall E M b, (E,M) |-R BoolE b ⇓ VBool b
 
     | EvPlusR : forall E M e1 e2 v1 v2 v,
         (E,M) |-R e1 ⇓ VInt v1 ->
