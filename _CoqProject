@@ -12,5 +12,7 @@ src/SOS/ABExp.v
 src/SOS/ABExp_Theorems.v
 src/Exercises/SOS_1_Example.v
 src/Exercises/Imp_4_DoubleFloat.v
+src/Exercises/Imp_5_Ref.v
+src/Exercises/Imp_6_RefExample.v
 src/Exercises/SOS_2_For.v
 src/Exercises/SOS_3_ForExample.v
