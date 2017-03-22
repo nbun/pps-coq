@@ -2,6 +2,8 @@ Require Export PPS.Map.
 Require Import Lists.List.
 Import ListNotations.
 
+Set Implicit Arguments.
+
 Section Env.
 
   Variable ID Val : Type.
@@ -29,3 +31,53 @@ Section Env.
   Definition union (Sigma Delta : EnvironmentL) := app Sigma Delta.
 
 End Env.
+
+Section Properties.
+
+  Lemma lookup_deterministic :
+    forall (A B : Type) (eqA : A -> A -> bool) (Sigma : EnvironmentL A B) (k : A) (v1 v2 : option B),
+      lookup eqA Sigma k = v1 ->
+      lookup eqA Sigma k = v2 ->
+      v1 = v2.
+  Proof.
+  Admitted.
+
+  Lemma lookupT_deterministic :
+    forall (A B : Type) (Sigma : EnvironmentT A B) (k : A) (v1 v2 : B),
+      Sigma k = v1 ->
+      Sigma k = v2 ->
+      v1 = v2.
+  Proof.
+  Admitted.
+
+  Lemma lookupP_deterministic :
+    forall (A B : Type) (Sigma : EnvironmentP A B) (k : A) (v1 v2 : option B),
+      Sigma k = v1 ->
+      Sigma k = v2 ->
+      v1 = v2.
+  Proof.
+  Admitted.
+
+  Lemma update_lookup1 :
+    forall (A B : Type) (eqA : A -> A -> bool) (Sigma : EnvironmentL A B) (k : A) (v : B),
+      (forall x : A, eqA x x = true) ->
+      lookup eqA (update eqA Sigma k v) k = Some v.
+  Proof.
+  Admitted.
+
+  Lemma update_lookup2 :
+    forall (A B : Type) (eqA : A -> A -> bool) (Sigma : EnvironmentL A B) (k1 k2 : A) (v1 v2 : B),
+      (forall x y z : A, eqA x y = eqA x z -> true = eqA y z) ->
+      eqA k2 k1 = false ->
+      lookup eqA (update eqA Sigma k2 v2) k1 = lookup eqA Sigma k1.
+  Proof.
+  Admitted.
+
+  Lemma union_lookup :
+    forall (A B : Type) (eqA : A -> A -> bool) (Sigma Delta : EnvironmentL A B) (k : A),
+      lookup eqA Delta k = None ->
+      lookup eqA (union Delta Sigma ) k = lookup eqA Sigma k.
+  Proof.
+  Admitted.
+
+End Properties.
