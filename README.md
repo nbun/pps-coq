@@ -9,7 +9,7 @@ coq_makefile -f _CoqProject -o Makefile
 followed by `make`. The generated `Makefile` updates itself upon execution; therefore, subsequent compilations do not require manually using `coq_makefile`. The Coq compiler `coqc` can be invoked manually when working with small projects.
 
 ## Working with Coq
-There are two popular options for writing code and constructing proofs in Coq: CoqIDE and Proof General. The former is a [graphical tool](https://coq.inria.fr/refman/Reference-Manual018.html) that features basic editing capabilities, a simple interface and allows the user to easily navigate and view a proof and its current (sub)goals.![CoqIDE](images/CoqIDE.png) 
+There are two popular options for writing code and constructing proofs in Coq: CoqIDE and Proof General. The former is a [graphical tool](https://coq.inria.fr/refman/Reference-Manual018.html) that features basic editing capabilities, a simple interface and it allows the user to easily navigate and proofs and the current (sub)goals.![CoqIDE](images/CoqIDE.png) 
 
 [Proof General](https://proofgeneral.github.io/) is an Emacs extension that, similar to CoqIDE, provides a front-end to Coq for the popular ~~operating system~~ editor. The extension collection [Company-Coq](https://github.com/cpitclaudel/company-coq) includes Proof General and adds even more features, such as prettification of operators and types, powerful auto-completion and other nice-to-have-but-probably-not-necessary functions.
 
