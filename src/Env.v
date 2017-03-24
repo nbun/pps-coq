@@ -36,12 +36,24 @@ Section Properties.
 
   Lemma lookup_deterministic :
     forall (A B : Type) (eqA : A -> A -> bool) (Sigma : EnvironmentL A B) (k : A) (v1 v2 : option B),
-      lookup eqA Sigma k = v1 ->
-      lookup eqA Sigma k = v2 ->
+      lookup A B eqA Sigma k = v1 ->
+      lookup A B eqA Sigma k = v2 ->
       v1 = v2.
   Proof.
-    intros A B eqA Sigma k v1 v2 H H0.
-    rewrite <- H. rewrite <- H0. reflexivity.
+    intros.
+    rewrite H in H0.
+    apply H0.
+  Qed.
+
+  Lemma lookupT_deterministic :
+    forall (A B : Type) (Sigma : EnvironmentT A B) (k : A) (v1 v2 : B),
+      Sigma k = v1 ->
+      Sigma k = v2 ->
+      v1 = v2.
+  Proof.
+    intros.
+    rewrite H in H0.
+    apply H0.
   Qed.
 
   Lemma lookupP_deterministic :
@@ -50,32 +62,57 @@ Section Properties.
       Sigma k = v2 ->
       v1 = v2.
   Proof.
-    intros A B Sigma k v1 v2 H H0. rewrite <- H. auto.
+    intros.
+    rewrite H in H0.
+    apply H0.
   Qed.
 
-  Lemma update_lookup1 :
+    Lemma update_lookup1 :
     forall (A B : Type) (eqA : A -> A -> bool) (Sigma : EnvironmentL A B) (k : A) (v : B),
       (forall x : A, eqA x x = true) ->
-      lookup eqA (update eqA Sigma k v) k = Some v.
+      lookup A B eqA (update A B eqA Sigma k v) k = Some v.
   Proof.
-    intros A B eqA Sigma k v H. induction Sigma.
-    - simpl. rewrite H. reflexivity.
-    - destruct a. simpl. destruct (eqA a k) eqn:H0.
-      * simpl. rewrite H0. reflexivity.
-      * simpl. rewrite H0. apply IHSigma.
+    intros.
+    induction Sigma; simpl.
+    - rewrite (H k).
+      reflexivity.
+    - destruct a.
+      remember (eqA a k) as akBool.
+      destruct akBool.
+      + simpl.
+        rewrite <- HeqakBool.
+        reflexivity.
+      + simpl.
+        rewrite <- HeqakBool.
+        apply IHSigma.
   Qed.
 
   Lemma update_lookup2 :
     forall (A B : Type) (eqA : A -> A -> bool) (Sigma : EnvironmentL A B) (k1 k2 : A) (v1 v2 : B),
       (forall x y z : A, eqA x y = eqA x z -> true = eqA y z) ->
       eqA k2 k1 = false ->
-      lookup eqA (update eqA Sigma k2 v2) k1 = lookup eqA Sigma k1.
+      lookup A B eqA (update A B eqA Sigma k2 v2) k1 = lookup A B eqA Sigma k1.
   Proof.
-    intros A B eqA Sigma k1 k2 v1 v2 H H0. induction Sigma.
-    - simpl. rewrite H0. reflexivity.
-    - destruct a. simpl. destruct (eqA a k2) eqn:H1.
-      * assert (eqA a k1 = false). Focus 2.
-      * rewrite H2. simpl. rewrite H2. reflexivity. Admitted.
+    intros.
+    induction Sigma; simpl.
+    - rewrite H0.
+      reflexivity.
+    - destruct a as [ k v ].
+      remember (eqA k k2) as kk2Bool.
+      destruct kk2Bool.
+      + simpl.
+        remember (eqA k k1) as kk1Bool.
+        destruct kk1Bool.
+        * rewrite Heqkk2Bool in Heqkk1Bool.
+          specialize (H k k2 k1 Heqkk1Bool).
+          congruence.
+        * reflexivity.
+      + simpl.
+        remember (eqA k k1) as kk1Bool.
+        destruct kk1Bool.
+        * reflexivity.
+        * apply IHSigma.
+  Qed.
 
   Lemma union_lookup :
     forall (A B : Type) (eqA : A -> A -> bool) (Sigma Delta : EnvironmentL A B) (k : A),
