@@ -36,8 +36,8 @@ Section Properties.
 
   Lemma lookup_deterministic :
     forall (A B : Type) (eqA : A -> A -> bool) (Sigma : EnvironmentL A B) (k : A) (v1 v2 : option B),
-      lookup A B eqA Sigma k = v1 ->
-      lookup A B eqA Sigma k = v2 ->
+      lookup eqA Sigma k = v1 ->
+      lookup eqA Sigma k = v2 ->
       v1 = v2.
   Proof.
     intros.
@@ -70,7 +70,7 @@ Section Properties.
     Lemma update_lookup1 :
     forall (A B : Type) (eqA : A -> A -> bool) (Sigma : EnvironmentL A B) (k : A) (v : B),
       (forall x : A, eqA x x = true) ->
-      lookup A B eqA (update A B eqA Sigma k v) k = Some v.
+      lookup eqA (update eqA Sigma k v) k = Some v.
   Proof.
     intros.
     induction Sigma; simpl.
@@ -91,7 +91,7 @@ Section Properties.
     forall (A B : Type) (eqA : A -> A -> bool) (Sigma : EnvironmentL A B) (k1 k2 : A) (v1 v2 : B),
       (forall x y z : A, eqA x y = eqA x z -> true = eqA y z) ->
       eqA k2 k1 = false ->
-      lookup A B eqA (update A B eqA Sigma k2 v2) k1 = lookup A B eqA Sigma k1.
+      lookup eqA (update eqA Sigma k2 v2) k1 = lookup eqA Sigma k1.
   Proof.
     intros.
     induction Sigma; simpl.
