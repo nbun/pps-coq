@@ -119,11 +119,11 @@ Section Properties.
       lookup eqA Delta k = None ->
       lookup eqA (union Delta Sigma ) k = lookup eqA Sigma k.
   Proof.
-    intros A B eqA Sigma Delta k H. induction Delta.
+    intros. induction Delta.
     - unfold union. rewrite app_nil_l. reflexivity.
-    - unfold union. rewrite <- app_comm_cons. destruct a.
-      * simpl. assert (eqA a k = false). Focus 2.
-      * rewrite H0. apply IHDelta. rewrite <- H. simpl. rewrite H0. reflexivity.
-  Admitted.
-
+    - unfold union. rewrite <- app_comm_cons. destruct a. simpl.
+      destruct eqA eqn:H1.
+      + simpl in H. rewrite H1 in H. inversion H.
+      + apply IHDelta. simpl in H. rewrite H1 in H. assumption.
+  Qed.
 End Properties.
