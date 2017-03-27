@@ -116,14 +116,18 @@ Section Properties.
 
   Lemma union_lookup :
     forall (A B : Type) (eqA : A -> A -> bool) (Sigma Delta : EnvironmentL A B) (k : A),
-      lookup eqA Delta k = None ->
-      lookup eqA (union Delta Sigma ) k = lookup eqA Sigma k.
+      lookup A B eqA Delta k = None ->
+      lookup A B eqA (union A B Delta Sigma ) k = lookup A B eqA Sigma k.
   Proof.
-    intros. induction Delta.
-    - unfold union. rewrite app_nil_l. reflexivity.
-    - unfold union. rewrite <- app_comm_cons. destruct a. simpl.
-      destruct eqA eqn:H1.
-      + simpl in H. rewrite H1 in H. inversion H.
-      + apply IHDelta. simpl in H. rewrite H1 in H. assumption.
+    intros.
+    induction Delta; simpl.
+    - reflexivity.
+    - destruct a as [k0 v].
+      inversion H.
+      destruct (eqA k0 k).
+      + inversion H1.
+      + apply IHDelta.
+        apply H1.
   Qed.
+
 End Properties.
