@@ -4,34 +4,84 @@ Require Import EqNat.
 
 Set Implicit Arguments.
 
-Lemma eq_cons_poly: forall (T1 : Type) (T2 : Type -> Type) (C : T1 -> (T2 T1)) (x y : T1),
-    x = y <-> C x = C y.
+Theorem aevalR_iff_aevalF :
+  forall Sigma e v,
+    Sigma |-a e ⇓ v <->
+    aevalF e Sigma = Some v.
 Proof.
   split.
-  - intros. rewrite H. reflexivity.
-  - intros. inversion H. Admitted.
-
-Lemma eq_cons_opt: forall (T : Type) (x y : T),
-    x = y <-> Some x = Some y.
-Proof.
-  split.
-  - intros. rewrite H. reflexivity.
-  - intros. inversion H. reflexivity.
+  - intros; induction H; subst; simpl.
+    + reflexivity.
+    + apply H.
+    + rewrite IHaevalR1.
+      rewrite IHaevalR2.
+      reflexivity.
+    + rewrite IHaevalR1.
+      rewrite IHaevalR2.
+      reflexivity.
+    + rewrite IHaevalR1.
+      rewrite IHaevalR2.
+      reflexivity.
+  - intros. generalize dependent v.
+    induction e; intros; simpl in H.
+    + inversion H; subst.
+      apply EvNum.
+    + apply EvVar.
+      apply H.
+    + destruct (aevalF e1 Sigma).
+      * destruct (aevalF e2 Sigma).
+        -- apply EvPlus with (v1 := n) (v2 := n0).
+           ++ apply IHe1.
+              reflexivity.
+           ++ apply IHe2.
+              reflexivity.
+           ++ inversion H.
+              reflexivity.
+        -- inversion H.
+      * inversion H.
+    + destruct (aevalF e1 Sigma); [ | inversion H].
+      * destruct (aevalF e2 Sigma); [ | inversion H].
+        -- apply EvSub with (v1 := n) (v2 := n0).
+           ++ apply IHe1; reflexivity.
+           ++ apply IHe2; reflexivity.
+           ++ inversion H; reflexivity.
+    + destruct (aevalF e1 Sigma); [ | inversion H].
+      * destruct (aevalF e2 Sigma); [ | inversion H].
+        -- apply EvMult with (v1 := n) (v2 := n0).
+           ++ apply IHe1; reflexivity.
+           ++ apply IHe2; reflexivity.
+           ++ inversion H; reflexivity.
 Qed.
 
-Lemma evplus_O : forall Sigma e1 e2 v,    
-    Sigma |-a e1 :+: e2 ⇓ v ->
-    Sigma |-a e1 ⇓ v ->
-    Sigma |-a e2 ⇓ 0.
+Theorem bevalR_iff_bevalF :
+  forall Sigma e v,
+    Sigma |-b e ⇓ v <->
+    bevalF e Sigma = Some v.
 Proof.
-Admitted.
-
-Lemma evplus_v : forall Sigma e1 e2 v,
-    Sigma |-a e1 :+: e2 ⇓ v ->
-    Sigma |-a e2 ⇓ 0 ->
-    Sigma |-a e1 ⇓ v.
-Proof.
-Admitted.
+  split.
+  - intros; induction H; simpl.
+    + reflexivity.
+    + reflexivity.
+    + apply aevalR_iff_aevalF in H; rewrite H.
+      apply aevalR_iff_aevalF in H0; rewrite H0.
+      subst.
+      reflexivity.
+  - intros. generalize dependent v.
+    induction e; intros.
+    + inversion H; subst.
+      apply EvT.
+    + inversion H; subst.
+      apply EvF.
+    + simpl in H.
+      destruct (aevalF a Sigma) eqn:Ha; [ | inversion H].
+      * destruct (aevalF a0 Sigma) eqn:Ha0; [ | inversion H].
+        -- apply EvLess with (v1 := n) (v2 := n0).
+           ++ apply aevalR_iff_aevalF.
+              apply Ha.
+           ++ apply aevalR_iff_aevalF.
+              apply Ha0.
+           ++ inversion H; subst; reflexivity.
+Qed.
 
 Theorem aevalR_deterministic :
   forall Sigma e v1 v2,
@@ -39,19 +89,34 @@ Theorem aevalR_deterministic :
     Sigma |-a e ⇓ v2 ->
     v1 = v2.
 Proof.
-  intros Sigma e v1 v2 H H0. generalize dependent v2. induction H.
-  - intros. inversion H0. reflexivity.
-  - intros. inversion H0. apply eq_cons_opt.
-    apply lookup_deterministic with
-      (A := nat) (eqA := beq_nat) (Sigma := Sigma) (k := x).
-    + rewrite <- H. reflexivity.
-    + rewrite <- H2. reflexivity.
-  - intros. rewrite H1. apply evplus_O with (e2 := e2) in H.
-    + apply IHaevalR2 in H. rewrite H. rewrite <- plus_n_O. apply IHaevalR1.
-      rewrite H in H0. apply evplus_v with (e2 := e2) in H2.
-      * assumption.
-      * assumption.
-    + econstructor. apply H. apply H0. Admitted.
+  intros.
+  generalize dependent v2.
+  induction H; intros.
+  - inversion H0; subst.
+    reflexivity.
+  - inversion H0; subst.
+    pose proof (lookup_deterministic beq_nat Sigma x H H2).
+    inversion H1.
+    reflexivity.
+  - inversion H2; subst.
+    f_equal.
+    + apply IHaevalR1.
+      apply H5.
+    + apply IHaevalR2.
+      apply H6.
+  - inversion H2; subst.
+    f_equal.
+    + apply IHaevalR1.
+      apply H5.
+    + apply IHaevalR2.
+      apply H6.
+  - inversion H2; subst.
+    f_equal.
+    + apply IHaevalR1.
+      apply H5.
+    + apply IHaevalR2.
+      apply H6.
+Qed.
  
 Theorem bevalR_deterministic :
   forall Sigma e v1 v2,
@@ -59,10 +124,15 @@ Theorem bevalR_deterministic :
     Sigma |-b e ⇓ v2 ->
     v1 = v2.
 Proof.
-  intros. destruct e eqn:t; try (inversion H; inversion H0; reflexivity).
-  inversion H. inversion H0.
-  rewrite H7. rewrite H14.
-  replace v0 with v4. replace v3 with v5. reflexivity.
-  eapply aevalR_deterministic. apply H11. apply H4.
-  eapply aevalR_deterministic. apply H10. apply H3.
+  intros.
+  induction e.
+  - inversion H; inversion H0; subst.
+    reflexivity.
+  - inversion H; inversion H0; subst.
+    reflexivity.
+  - inversion H; inversion H0; subst.
+    pose proof (aevalR_deterministic H3 H10).
+    pose proof (aevalR_deterministic H4 H11).
+    subst.
+    reflexivity.
 Qed.
