@@ -33,9 +33,9 @@ Section ImpModell.
 
   Definition EnvEntry : Type := Ref * Ty.
 
-  Definition Env := EnvironmentL Name EnvEntry.
+  Definition Env := listMap Name EnvEntry.
 
-  Definition Memory := EnvironmentT Ref Val.
+  Definition Memory := totalMap Ref Val.
 
   Reserved Notation "E '|-l' val" (at level 80).
 
@@ -183,6 +183,7 @@ Section ImpModell.
     | EvDerefR : forall E M e l,
         (E,M) |-R e ⇓ VNum l ->
         (E,M) |-R RefE e ⇓ M (natValue l)
+
     | EvAddrR : forall E M e l,
         (E,M) |-L e ⇓ l ->
         (E,M) |-R Deref e ⇓ VNum (VInt l)

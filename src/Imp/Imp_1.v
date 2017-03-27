@@ -15,9 +15,9 @@ Section ImpModell.
   Inductive Ty : Type :=
   | Int    : Ty.
 
-  Definition Env := EnvironmentL Name Ref.
+  Definition Env := listMap Name Ref.
 
-  Definition Memory := EnvironmentT Ref Val.
+  Definition Memory := totalMap Ref Val.
 
   Reserved Notation "E '|-l' val" (at level 80).
 
@@ -41,10 +41,8 @@ Section ImpModell.
     Inductive ArithExp : Type :=
     | Num : nat -> ArithExp
     | Var : Name -> ArithExp
-    | Op : ArithExp -> Ops -> ArithExp -> ArithExp
-    with Ops : Type :=
-         | plus : Ops
-         | mult : Ops.
+    | Plus : ArithExp -> ArithExp -> ArithExp
+    | Mult : ArithExp -> ArithExp -> ArithExp.
     
   End Exp.
 
@@ -62,13 +60,13 @@ Section ImpModell.
         (E,M) |-R e1 ⇓ v1 ->
         (E,M) |-R e2 ⇓ v2 ->
         v = v1 + v2 ->
-        (E,M) |-R Op e1 plus e2 ⇓ v
+        (E,M) |-R Plus e1 e2 ⇓ v
                                
     | EvMultR : forall E M e1 e2 v1 v2 v,
         (E,M) |-R e1 ⇓ v1 ->
         (E,M) |-R e2 ⇓ v2 ->
         v = v1 * v2 ->
-        (E,M) |-R Op e1 mult e2 ⇓ v
+        (E,M) |-R Mult e1 e2 ⇓ v
                
     where "EM '|-R' e ⇓ v" := (evalR EM e v).
 

@@ -1,4 +1,3 @@
-Require Import Nat.
 Require Import PPS.Env.
 
 Set Implicit Arguments.
@@ -6,30 +5,38 @@ Set Implicit Arguments.
 Section ImpModell.
 
   Inductive Val : Type :=
+  (* >>>>>>>>>>>>>>>>>>>>> *)
   | VNum      : ValNum -> Val
+  (* <<<<<<<<<<<<<<<<<<<<< *)
   | VBool     : bool -> Val
   | Undefined : Val
+  (* >>>>>>>>>>>>>>>>>>>>> *)
   with ValNum : Type :=
        | VInt : nat -> ValNum
        | VDouble : nat -> ValNum
        | VFloat : nat -> ValNum.
+  (* <<<<<<<<<<<<<<<<<<<<< *)
 
   Definition Ref := nat.
   Definition Name := nat.
 
   Inductive Ty : Type :=
+  (* >>>>>>>>>>>>>>>>>>>>> *)
   | Numeric : TyNum -> Ty
+  (* <<<<<<<<<<<<<<<<<<<<< *)
   | Bool    : Ty
+  (* >>>>>>>>>>>>>>>>>>>>> *)
   with TyNum : Type :=
        | Int : TyNum
        | Float : TyNum
        | Double : TyNum.
+  (* <<<<<<<<<<<<<<<<<<<<< *)
 
   Definition EnvEntry : Type := Ref * Ty.
 
-  Definition Env := EnvironmentL Name EnvEntry.
+  Definition Env := listMap Name EnvEntry.
 
-  Definition Memory := EnvironmentT Ref Val.
+  Definition Memory := totalMap Ref Val.
 
   Reserved Notation "E '|-l' val" (at level 80).
 
@@ -54,14 +61,13 @@ Section ImpModell.
     | Num : ValNum -> Exp
     | BoolE : bool -> Exp
     | Var : Ty -> Name -> Exp
-    | Op : Exp -> Ops -> Exp -> Exp
-    with Ops : Type :=
-         | plus : Ops
-         | mult : Ops
-         | less : Ops.
+    | Plus : Exp -> Exp -> Exp
+    | Mult : Exp -> Exp -> Exp
+    | Less : Exp -> Exp -> Exp.
 
   End Exp.
 
+  (* >>>>>>>>>>>>>>>>>>>>> *)
   Reserved Notation "E '|-T' x ':::' t" (at level 40).
 
   Section EvalT.
@@ -96,33 +102,35 @@ Section ImpModell.
     | EvTPlus : forall E e1 e2 tau,
         E |-T e1 ::: Numeric tau ->
         E |-T e2 ::: Numeric tau ->
-        E |-T (Op e1 plus e2) ::: Numeric tau
+        E |-T Plus e1 e2 ::: Numeric tau
 
     | EvTMult : forall E e1 e2 tau,
         E |-T e1 ::: Numeric tau ->
         E |-T e2 ::: Numeric tau ->
-        E |-T (Op e1 mult e2) ::: Numeric tau
+        E |-T Mult e1 e2 ::: Numeric tau
 
     | EvTLess : forall E e1 e2 tau,
         E |-T e1 ::: Numeric tau ->
         E |-T e2 ::: Numeric tau ->
-        E |-T (Op e1 less e2) ::: Bool
+        E |-T Less e1 e2 ::: Bool
 
     | EvTOpCast : forall E e1 e2 t1 t2 op,
                 E |-T e1 ::: Numeric t1 ->
                 E |-T e2 ::: Numeric t2 ->
-                (op = mult \/ op = plus) ->     
-                E |-T (Op e1 op e2) ::: Numeric (maxT t1 t2)
+                (op = Mult \/ op = Plus) ->     
+                E |-T op e1 e2 ::: Numeric (maxT t1 t2)
 
     where "E '|-T' x ':::' t" := (evalT E x t).
 
   End EvalT.
 
   Notation "E '|-T' x ':::' t" := (evalT E x t).
+  (* <<<<<<<<<<<<<<<<<<<<< *)
   
   Reserved Notation "EM '|-R' e ⇓ v" (at level 80).
   Section EvalR.
 
+    (* >>>>>>>>>>>>>>>>>>>>> *)
     Definition natValue (v : ValNum) : nat :=
       match v with
       | VInt n => n
@@ -136,6 +144,7 @@ Section ImpModell.
       | Double => VDouble
       | Float => VFloat
       end.
+    (* <<<<<<<<<<<<<<<<<<<<< *)
 
     Inductive evalR : (Env * Memory) -> Exp -> Val -> Prop :=
     | EvVarR  : forall E M x l tau val,
@@ -147,26 +156,28 @@ Section ImpModell.
 
     | EVBoolR : forall E M b, (E,M) |-R BoolE b ⇓ VBool b
 
+    (* >>>>>>>>>>>>>>>>>>>>> *)
     | EvPlusR : forall E M e1 e2 v1 v2 tau v,
         (E,M) |-R e1 ⇓ VNum v1 ->
         (E,M) |-R e2 ⇓ VNum v2 ->
-        E |-T Op e1 plus e2 ::: Numeric tau ->
+        E |-T Plus e1 e2 ::: Numeric tau ->
         v = valTyToValNum tau (natValue v1 + natValue v2) ->
-        (E,M) |-R Op e1 plus e2 ⇓ VNum v
+        (E,M) |-R Plus e1 e2 ⇓ VNum v
                                
     | EvMultR : forall E M e1 e2 v1 v2 tau v,
         (E,M) |-R e1 ⇓ VNum v1 ->
         (E,M) |-R e2 ⇓ VNum v2 ->
-        E |-T Op e1 mult e2 ::: Numeric tau ->
+        E |-T Mult e1 e2 ::: Numeric tau ->
         v = valTyToValNum tau (natValue v1 * natValue v2) ->
-        (E,M) |-R Op e1 mult e2 ⇓ VNum v
+        (E,M) |-R Mult e1 e2 ⇓ VNum v
 
     | EvLessR : forall E M e1 e2 v1 v2 b,
         (E,M) |-R e1 ⇓ VNum v1 ->
         (E,M) |-R e2 ⇓ VNum v2 ->
-        b = VBool (leb (natValue v1) (natValue v2)) ->
-        (E,M) |-R Op e1 less e2 ⇓ b
-               
+        b = VBool (Nat.leb (natValue v1) (natValue v2)) ->
+        (E,M) |-R Less e1 e2 ⇓ b
+    (* <<<<<<<<<<<<<<<<<<<<< *)
+
     where "EM '|-R' e ⇓ v" := (evalR EM e v).
 
   End EvalR.
@@ -202,7 +213,7 @@ Section ImpModell.
     Reserved Notation "'<' E '|' M '>' alpha '<' E' '|' M' '>'"
              (at level 40, E at level 39, M at level 39, M' at level 40,
               E' at level 39, alpha at level 39).
-    Notation "M '[' var ↦ val ']'" := (updateTMap eqb M var val)
+    Notation "M '[' var ↦ val ']'" := (updateTMap Nat.eqb M var val)
                                     (at level 40, right associativity).
 
     Inductive IsFree : Name -> Memory -> Prop :=
@@ -210,6 +221,7 @@ Section ImpModell.
         M x = Undefined ->
         IsFree x M.
 
+    (* >>>>>>>>>>>>>>>>>>>>> *)
     Definition convert (t1 t2 : Ty) (v : Val) : option Val :=
       match t1, t2, v with
       | Numeric t1', Numeric t2', VNum n =>
@@ -219,6 +231,7 @@ Section ImpModell.
       | Bool, Bool, VBool b => Some (VBool b)
       | _, _,_ => None
       end.
+    (* <<<<<<<<<<<<<<<<<<<<< *)
 
     Inductive eval : Env * Memory -> Stm -> Env * Memory -> Prop :=
     | EvDecl : forall E M l tau n,
@@ -228,9 +241,11 @@ Section ImpModell.
     | EvAss : forall E M e1 e2 l v t1 t2 v',
         (E,M) |-L e1 ⇓ l ->
         (E,M) |-R e2 ⇓ v ->
+        (* >>>>>>>>>>>>>>>>>>>>> *)
         E |-T e1 ::: t1 ->
         E |-T e2 ::: t2 ->
         Some v' = convert t1 t2 v ->
+        (* <<<<<<<<<<<<<<<<<<<<< *)
         < E | M > Ass e1 e2 < E | M [l ↦ v'] >
 
     | EvSeq : forall E M E' M' E'' M'' S1 S2,
@@ -256,6 +271,7 @@ Section ImpModell.
     | EvWhileFalse : forall E M bexp S,
         (E,M) |-R bexp ⇓ VBool false ->
         < E | M > While bexp S < E | M >
+
     where "'<' E '|' M '>' alpha '<' E' '|' M' '>'" := (eval (E,M) alpha (E',M')).
     
   End Stm.

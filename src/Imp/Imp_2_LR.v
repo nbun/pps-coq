@@ -15,9 +15,9 @@ Section ImpModell.
   Inductive Ty : Type :=
   | Int    : Ty.
 
-  Definition Env := EnvironmentL Name Ref.
+  Definition Env := listMap Name Ref.
 
-  Definition Memory := EnvironmentT Ref Val.
+  Definition Memory := totalMap Ref Val.
 
   Reserved Notation "E '|-l' val" (at level 80).
 
@@ -41,10 +41,8 @@ Section ImpModell.
     Inductive ArithExp : Type :=
     | Num : nat -> ArithExp
     | Var : Name -> ArithExp
-    | Op : ArithExp -> Ops -> ArithExp -> ArithExp
-    with Ops : Type :=
-         | plus : Ops
-         | mult : Ops.
+    | Plus : ArithExp -> ArithExp -> ArithExp
+    | Mult : ArithExp -> ArithExp -> ArithExp.
     
   End Exp.
 
@@ -62,19 +60,20 @@ Section ImpModell.
         (E,M) |-R e1 ⇓ v1 ->
         (E,M) |-R e2 ⇓ v2 ->
         v = v1 + v2 ->
-        (E,M) |-R Op e1 plus e2 ⇓ v
+        (E,M) |-R Plus e1 e2 ⇓ v
                                
     | EvMultR : forall E M e1 e2 v1 v2 v,
         (E,M) |-R e1 ⇓ v1 ->
         (E,M) |-R e2 ⇓ v2 ->
         v = v1 * v2 ->
-        (E,M) |-R Op e1 mult e2 ⇓ v
+        (E,M) |-R Mult e1 e2 ⇓ v
                
     where "EM '|-R' e ⇓ v" := (evalR EM e v).
 
   End EvalR.
   Notation "EM '|-R' e ⇓ v" := (evalR EM e v).
 
+  (* >>>>>>>>>>>>>>>>>>>>> *)
   Reserved Notation "EM '|-L' e ⇓ v" (at level 80).
   Section EvalL.
     
@@ -86,6 +85,7 @@ Section ImpModell.
 
   End EvalL.
   Notation "EM '|-L' e ⇓ v" := (evalL EM e v).
+  (* <<<<<<<<<<<<<<<<<<<<< *)
 
   Section Stm.
 
@@ -110,8 +110,10 @@ Section ImpModell.
         IsFree l M ->
         < E | M > Decl n < E; (n, l) | M [l ↦ VInt 0] >
 
-     | EvAss : forall E M e1 e2 l v,
+    | EvAss : forall E M e1 e2 l v,
+        (* >>>>>>>>>>>>>>>>>>>>> *)
         (E,M) |-L e1 ⇓ l ->
+        (* <<<<<<<<<<<<<<<<<<<<< *)
         (E,M) |-R e2 ⇓ v ->
         < E | M > Ass e1 e2 < E | M [l ↦ VInt v] >
 

@@ -32,7 +32,7 @@ Section SOS.
 
     Variable Val : Type.
 
-    Definition SOS_Context := EnvironmentL nat Val.
+    Definition SOS_Context := listMap nat Val.
     Definition SOS_replace := @update nat Val eqb.
     Definition SOS_lookup := @lookup nat Val eqb.
 

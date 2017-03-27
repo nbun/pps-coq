@@ -1,5 +1,4 @@
 Require Import PPS.Env.
-Require Import Nat.
 
 Set Implicit Arguments.
 
@@ -26,11 +25,11 @@ Section SOS.
 
     Variable Val : Type.
 
-    Definition SOS_Context := EnvironmentL nat Val.
-    Definition SOS_replace := @update nat Val eqb.
-    Definition SOS_lookup := @lookup nat Val eqb.
+    Definition SOS_Context := listMap nat Val.
+    Definition SOS_add := @update nat Val Nat.eqb.
+    Definition SOS_lookup := @lookup nat Val Nat.eqb.
 
-    Notation "o [ var ↦ val ]" := (SOS_replace o var val) (at level 80, right associativity).
+    Notation "o [ var ↦ val ]" := (SOS_add o var val) (at level 80, right associativity).
 
     Section StepRelation.
 

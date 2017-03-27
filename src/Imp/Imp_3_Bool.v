@@ -1,4 +1,3 @@
-Require Import Nat.
 Require Import PPS.Env.
 
 Set Implicit Arguments.
@@ -7,7 +6,9 @@ Section ImpModell.
 
   Inductive Val : Type :=
   | VInt      : nat -> Val
+  (* >>>>>>>>>>>>>>>>>>>>> *)
   | VBool     : bool -> Val
+  (* <<<<<<<<<<<<<<<<<<<<< *)
   | Undefined : Val.
 
   Definition Ref := nat.
@@ -15,13 +16,15 @@ Section ImpModell.
 
   Inductive Ty : Type :=
   | Int    : Ty
+  (* >>>>>>>>>>>>>>>>>>>>> *)
   | Bool   : Ty.
+  (* <<<<<<<<<<<<<<<<<<<<< *)
 
   Definition EnvEntry : Type := Ref * Ty.
 
-  Definition Env := EnvironmentL Name EnvEntry.
+  Definition Env := listMap Name EnvEntry.
 
-  Definition Memory := EnvironmentT Ref Val.
+  Definition Memory := totalMap Ref Val.
 
   Reserved Notation "E '|-l' val" (at level 80).
 
@@ -44,13 +47,15 @@ Section ImpModell.
 
     Inductive Exp : Type :=
     | Num : nat -> Exp
+    (* >>>>>>>>>>>>>>>>>>>>> *)
     | BoolE : bool -> Exp
+    (* <<<<<<<<<<<<<<<<<<<<< *)
     | Var : Ty -> Name -> Exp
-    | Op : Exp -> Ops -> Exp -> Exp
-    with Ops : Type :=
-         | plus : Ops
-         | mult : Ops
-         | less : Ops.
+    | Plus : Exp -> Exp -> Exp
+    | Mult : Exp -> Exp -> Exp
+    (* >>>>>>>>>>>>>>>>>>>>> *)
+    | Less : Exp -> Exp -> Exp.
+    (* <<<<<<<<<<<<<<<<<<<<< *)
     
   End Exp.
 
@@ -65,26 +70,30 @@ Section ImpModell.
 
     | EvNumR  : forall E M n, (E,M) |-R Num n ⇓ VInt n
 
+    (* >>>>>>>>>>>>>>>>>>>>> *)
     | EVBoolR : forall E M b, (E,M) |-R BoolE b ⇓ VBool b
+    (* <<<<<<<<<<<<<<<<<<<<< *)
 
     | EvPlusR : forall E M e1 e2 v1 v2 v,
         (E,M) |-R e1 ⇓ VInt v1 ->
         (E,M) |-R e2 ⇓ VInt v2 ->
         v = VInt (v1 + v2) ->
-        (E,M) |-R Op e1 plus e2 ⇓ v
+        (E,M) |-R Plus e1 e2 ⇓ v
                                
     | EvMultR : forall E M e1 e2 v1 v2 v,
         (E,M) |-R e1 ⇓ VInt v1 ->
         (E,M) |-R e2 ⇓ VInt v2 ->
         v = VInt (v1 * v2) ->
-        (E,M) |-R Op e1 mult e2 ⇓ v
+        (E,M) |-R Mult e1 e2 ⇓ v
 
+    (* >>>>>>>>>>>>>>>>>>>>> *)
     | EvLessR : forall E M e1 e2 v1 v2 b,
         (E,M) |-R e1 ⇓ VInt v1 ->
         (E,M) |-R e2 ⇓ VInt v2 ->
-        b = VBool (leb v1 v2) ->
-        (E,M) |-R Op e1 less e2 ⇓ b
-               
+        b = VBool (Nat.leb v1 v2) ->
+        (E,M) |-R Less e1 e2 ⇓ b
+    (* <<<<<<<<<<<<<<<<<<<<< *)
+
     where "EM '|-R' e ⇓ v" := (evalR EM e v).
 
   End EvalR.
@@ -108,20 +117,24 @@ Section ImpModell.
     | Ass    : Exp -> Exp -> Stm
     | Decl   : Ty -> Name -> Stm
     | Seq    : Stm -> Stm -> Stm
+    (* >>>>>>>>>>>>>>>>>>>>> *)
     | If     : Exp -> Stm -> Stm -> Stm
     | While  : Exp -> Stm -> Stm.
+    (* <<<<<<<<<<<<<<<<<<<<< *)
 
+    (* >>>>>>>>>>>>>>>>>>>>> *)
     Definition newVarVal (T : Ty) : Val :=
       match T with
       | Int    => VInt 0
       | Bool   => VBool false
       end.
+    (* <<<<<<<<<<<<<<<<<<<<< *)
 
     Reserved Notation "'<' E '|' M '>' alpha '<' E' '|' M' '>'"
              (at level 40, E at level 39, M at level 39, M' at level 40,
               E' at level 39, alpha at level 39).
-    Notation "M '[' var ↦ val ']'" := (updateTMap eqb M var val)
-                                    (at level 40, right associativity).
+    Notation "M '[' var ↦ val ']'" := (updateTMap Nat.eqb M var val)
+                                        (at level 40, right associativity).
 
     Inductive IsFree : Name -> Memory -> Prop :=
     | isFree : forall x M,
@@ -143,6 +156,7 @@ Section ImpModell.
         < E' | M' > S2 < E'' | M'' > ->
         < E | M > Seq S1 S2 < E'' | M'' >
 
+    (* >>>>>>>>>>>>>>>>>>>>> *)
     | EvIfTrue : forall E M E' M' bexp S1 S2,
         (E,M) |-R bexp ⇓ VBool true ->
         < E | M > S1 < E' | M' > ->
@@ -161,6 +175,8 @@ Section ImpModell.
     | EvWhileFalse : forall E M bexp S,
         (E,M) |-R bexp ⇓ VBool false ->
         < E | M > While bexp S < E | M >
+    (* <<<<<<<<<<<<<<<<<<<<< *)
+
     where "'<' E '|' M '>' alpha '<' E' '|' M' '>'" := (eval (E,M) alpha (E',M')).
     
   End Stm.
