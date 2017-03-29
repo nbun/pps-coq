@@ -216,7 +216,7 @@ Section ImpModell.
     Notation "M '[' var ↦ val ']'" := (updateTMap Nat.eqb M var val)
                                     (at level 40, right associativity).
 
-    Inductive IsFree : Name -> Memory -> Prop :=
+    Inductive IsFree : Ref -> Memory -> Prop :=
     | isFree : forall x M,
         M x = Undefined ->
         IsFree x M.
