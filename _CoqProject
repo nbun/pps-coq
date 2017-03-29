@@ -5,6 +5,7 @@ src/Exp.v
 src/Imp/Imp_1.v
 src/Imp/Imp_2_LR.v
 src/Imp/Imp_3_Bool.v
+src/Obj/Obj.v
 src/SOS/SOS.v
 src/SOS/SOS_Theorems.v
 src/SOS/ABExp.v
