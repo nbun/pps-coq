@@ -1,7 +1,5 @@
-Require Import PPS.Imp.Imp_3_Bool PPS.Env Lists.List EqNat. 
-Import ListNotations.
+Require Import PPS.Imp.Imp_3_Bool PPS.Env.
 
-Notation "E ; x" := (union E (cons x nil)) (at level 40).
 Notation "t 'var' n" := (Decl t n) (at level 30).
 Notation "S ;; S'" := (Seq S S') (at level 50).
 Notation "L ::= R" := (Ass L R) (at level 30).
@@ -17,7 +15,7 @@ Definition P :=
   While (Less (Var Int 1) (Num 1)) Do
     (Var Int 1) ::= (Plus (Var Int 1) (Num 1)).
 
-Definition E : Env := [] ; (1, (1, Int)) ; (2, (2, Bool)).
+Definition E : Env := cons (2, (2, Bool)) (cons (1, (1, Int)) nil).
 Definition eTM := @emptyTMap Ref Val Undefined.
 Definition M := updateTMap Nat.eqb
                   (updateTMap Nat.eqb
@@ -27,35 +25,48 @@ Definition M := updateTMap Nat.eqb
                   1 (VInt 1))
                 1 (VInt 2).
 
-Example e : <[]|eTM> P <E|M>.
-Proof. eapply EvSeq; simpl.
-       - eapply EvSeq.
-         + eapply EvSeq.
-           * apply EvDecl. apply isFree. instantiate (1 := 1). reflexivity.
-           * apply EvDecl. apply isFree. instantiate (1 := 2).  reflexivity.
-         + apply EvAss.
-           * eapply EvVarL. apply LRule. apply LAxiom.
-           * apply EvNumR.
-       - eapply EvWhileTrue.
-         + eapply EvLessR.
-           * eapply EvVarR.
-             -- apply LRule. apply LAxiom.
-             -- reflexivity.
-           * apply EvNumR.
-           * reflexivity.
-         + eapply EvSeq.
-           * eapply EvAss.
-             -- eapply EvVarL. apply LRule. apply LAxiom.
-             -- eapply EvPlusR.
-                ++ eapply EvVarR.
-                   ** apply LRule. apply LAxiom.
-                   ** reflexivity.
-                ++ apply EvNumR.
-                ++ reflexivity.
-           * simpl. eapply EvWhileFalse. eapply EvLessR.
-             -- eapply EvVarR.
-                ** apply LRule. apply LAxiom.
-                **  reflexivity.
-             -- apply EvNumR. 
-             -- reflexivity.
+Example e : < nil | eTM > P < E | M >.
+Proof.
+  unfold P.
+  eapply EvSeq; simpl.
+  - eapply EvSeq.
+    + eapply EvSeq.
+      * apply EvDecl with (l := 1).
+        apply isFree.
+        reflexivity.
+      * apply EvDecl with (l := 2).
+        apply isFree.
+        reflexivity.
+    + apply EvAss; simpl.
+      * apply EvVarL with (l := 1).
+        apply LRule.
+        apply LAxiom.
+      * apply EvNumR.
+  - apply EvWhileTrue; simpl.
+    + eapply EvLessR.
+      * apply EvVarR with (l := 1).
+        -- apply LRule.
+           apply LAxiom.
+        -- reflexivity.
+      * apply EvNumR.
+      * reflexivity.
+    + eapply EvSeq.
+      * apply EvAss; simpl.
+        -- apply EvVarL.
+           apply LRule.
+           apply LAxiom.
+        -- eapply EvPlusR.
+           ++ apply EvVarR with (l := 1).
+              ** apply LRule.
+                 apply LAxiom.
+              ** reflexivity.
+           ++ apply EvNumR.
+           ++ reflexivity.
+      * apply EvWhileFalse.
+        eapply EvLessR.
+        -- apply EvVarR with (l := 1).
+           ** apply LRule. apply LAxiom.
+           ** reflexivity.
+        -- apply EvNumR. 
+        -- reflexivity.
 Qed.

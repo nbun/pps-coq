@@ -28,7 +28,7 @@ Section ImpModell.
 
   Reserved Notation "E '|-l' val" (at level 80).
 
-  Notation "E ; x" := (union E (cons x nil)) (at level 40).
+  Notation "E ; x" := (union (cons x nil) E) (at level 40).
 
   Section EnvRelation.
     
@@ -36,8 +36,7 @@ Section ImpModell.
     | LAxiom : forall E x beta,
         E; (x, beta) |-l (x, beta)
     | LRule : forall E x y beta gamma,
-        E |-l (x,beta) ->
-        E; (y, gamma) |-l (x, beta)
+        E |-l (x, beta) -> E; (y, gamma) |-l (x, beta)
     where "E '|-l' val" := (Lookup E val).
       
   End EnvRelation.
@@ -136,7 +135,7 @@ Section ImpModell.
     Notation "M '[' var ↦ val ']'" := (updateTMap Nat.eqb M var val)
                                         (at level 40, right associativity).
 
-    Inductive IsFree : Ref -> Memory -> Prop :=
+    Inductive IsFree : Name -> Memory -> Prop :=
     | isFree : forall x M,
         M x = Undefined ->
         IsFree x M.
