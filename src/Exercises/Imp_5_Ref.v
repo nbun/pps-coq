@@ -5,11 +5,21 @@ Set Implicit Arguments.
 
 Section ImpModell.
 
+  Inductive Ref :=
+  | RefAddr : nat -> Ref
+  | RefNull : Ref.
+
+  Definition ref_eqb (r1 r2 : Ref) : bool :=
+    match r1, r2 with
+    | RefAddr n1, RefAddr n2 => Nat.eqb n1 n2
+    | _,_ => false
+    end.
+
   Inductive Val : Type :=
   | VNum      : ValNum -> Val
   | VBool     : bool -> Val
   (* >>>>>>>>>>>>>>>>>>>>> *)
-  | Null      : Val
+  | VRef      : Ref -> Val
   (* <<<<<<<<<<<<<<<<<<<<< *)
   | Undefined : Val
   with ValNum : Type :=
@@ -17,7 +27,6 @@ Section ImpModell.
        | VDouble : nat -> ValNum
        | VFloat : nat -> ValNum.
 
-  Definition Ref := nat.
   Definition Name := nat.
 
   Inductive Ty : Type :=
@@ -63,7 +72,7 @@ Section ImpModell.
     | Op : Exp -> Ops -> Exp -> Exp
     (* >>>>>>>>>>>>>>>>>>>>> *)
     | RefE   : Exp -> Exp
-    | Deref  : Exp -> Exp
+    | Addr  : Exp -> Exp
     (* <<<<<<<<<<<<<<<<<<<<< *)
     with Ops : Type :=
          | plus : Ops
@@ -181,12 +190,12 @@ Section ImpModell.
 
     (* >>>>>>>>>>>>>>>>>>>>> *)
     | EvDerefR : forall E M e l,
-        (E,M) |-R e ⇓ VNum l ->
-        (E,M) |-R RefE e ⇓ M (natValue l)
+        (E,M) |-R e ⇓ VRef (RefAddr l) ->
+        (E,M) |-R RefE e ⇓ M (RefAddr l)
 
     | EvAddrR : forall E M e l,
         (E,M) |-L e ⇓ l ->
-        (E,M) |-R Deref e ⇓ VNum (VInt l)
+        (E,M) |-R Addr e ⇓ VRef l
     (* <<<<<<<<<<<<<<<<<<<<< *)
 
     where "EM '|-R' e ⇓ v" := (evalR EM e v)
@@ -197,8 +206,8 @@ Section ImpModell.
                          
          (* >>>>>>>>>>>>>>>>>>>>> *)
          | EvDerefL : forall E M e l,
-             (E,M) |-R e ⇓ VNum l ->
-             (E,M) |-L RefE e ⇓ natValue l
+             (E,M) |-R e ⇓ VRef l ->
+             (E,M) |-L RefE e ⇓ l
          (* <<<<<<<<<<<<<<<<<<<<< *)
     where "EM '|-L' e ⇓ v" := (evalL EM e v).
     
@@ -222,16 +231,16 @@ Section ImpModell.
       match T with
       | Numeric nTy => VNum (valTyToValNum nTy 0)
       | Bool        => VBool false
-      | RefT _      => Null
+      | RefT _      => VRef RefNull
       end.
 
     Reserved Notation "'<' E '|' M '>' alpha '<' E' '|' M' '>'"
              (at level 40, E at level 39, M at level 39, M' at level 40,
               E' at level 39, alpha at level 39).
-    Notation "M '[' var ↦ val ']'" := (updateTMap eqb M var val)
+    Notation "M '[' var ↦ val ']'" := (updateTMap ref_eqb M var val)
                                     (at level 40, right associativity).
 
-    Inductive IsFree : Name -> Memory -> Prop :=
+    Inductive IsFree : Ref -> Memory -> Prop :=
     | isFree : forall x M,
         M x = Undefined ->
         IsFree x M.
