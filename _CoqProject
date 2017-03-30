@@ -17,3 +17,5 @@ src/Exercises/Imp_5_Ref.v
 src/Exercises/Imp_5_RefExample.v
 src/Exercises/SOS_2_For.v
 src/Exercises/SOS_3_ForExample.v
+src/Exercises/S2/Exp_Let.v
+src/Exercises/S2/ABExp_Let.v
