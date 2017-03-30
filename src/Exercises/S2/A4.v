@@ -18,7 +18,6 @@ Example e : Sigma |-a exp ⇓ 6.
 Proof. apply EvMult with (v1 := 3) (v2 := 2).
        - apply EvVar. reflexivity.
        - eapply EvLet.
-         + admit.
          + apply EvPlus with (v1 := 4) (v2 := 5).
            * apply EvNum.
            * apply EvVar. reflexivity.

@@ -29,11 +29,13 @@ Section ArithRelation.
       Sigma |-a e2 ⇓ v2 ->
       v = v1 * v2 ->
       Sigma |-a AMult e1 e2 ⇓ v
-  | EvLet : forall Sigma (Delta : SOS_Context nat) x e1 e2 v1 v2,
+  (* >>>>>>>>>>>>>>>>>>>>> *)
+  | EvLet : forall Sigma x e1 e2 v1 v2,
       Sigma |-a e1 ⇓ v1 ->
       let Delta := add Sigma x v1
       in Delta |-a e2 ⇓ v2 ->
       Sigma |-a ALet x e1 e2 ⇓ v2
+  (* <<<<<<<<<<<<<<<<<<<<< *)
   where "Sigma '|-a' e ⇓ v" := (aevalR e Sigma v).
 
 End ArithRelation.
@@ -62,12 +64,14 @@ Section ArithFunction.
         Some (v1 - v2)
       | _,_ => None
       end
+    (* >>>>>>>>>>>>>>>>>>>>> *)
     | ALet x e1 e2 =>
       match aevalF e1 c0 with
       | Some v1 =>
         aevalF e2 (add c0 x v1)
       | _ => None
       end
+    (* <<<<<<<<<<<<<<<<<<<<< *)
     end.
 
 End ArithFunction.
